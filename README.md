@@ -1,87 +1,73 @@
-# Java HTTP Client - GET and POST
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 
-Java tutorial project to learn how to communicate with a REST API using `HttpClient`, `HttpRequest`, and `HttpResponse`.
+public class Main{
 
-The program sends HTTP requests to [JSONPlaceholder](https://jsonplaceholder.typicode.com/), a free online service used to test API calls.
+    private static final String BASE_URL = "https://jsonplaceholder.typicode.com/";
 
-## What it does
+    private static final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+    private static HttpResponse<Object> response;
 
-- Makes a `POST` request to `/posts`, sending a JSON payload.
-- Prints the status code and response body to the console.
-- Makes a `GET` request to `/posts/3`.
-- Checks the response status code.
-- Handles any network errors with `try/catch`.
+    public static void fetch(){
 
-## Technologies Used
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "posts/3"))
+                .timeout(Duration.ofSeconds(5))
+                .GET()
+                .build();
+        try{
 
-- Java 21
-- Java HTTP Client
-- JSONPlaceholder API
-- IntelliJ IDEA
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if(response.statusCode() != 200) {
 
-## Structure
+                System.err.println("Errore critico, il serever ha risposro con lo status code: " + response.statusCode());
+                return;
+            } else {
 
-```text
-src/
-└── Main.java
-```
+                System.out.println(response.body() + "\nPlyaload ricevuto con successo!");
+            }
+        } catch(Exception e){
 
-## How to Clone the Project
+            System.err.println("Fallimento di rete o interruzione del thread: " + e.getMessage());
+        }
+    }
 
-To download this project on your device, open the terminal and run:
+    public static void post(){
 
-```bash
-git clone https://github.com/YOUR-USERNAME/java-http-client-jsonplaceholder.git
-```
+        String jsonPlayLoad = """
+        {
+            "title": "Studiare Spring Boot",
+            "body": "Capire controller, service e repository",
+            "userId": 7
+        }
+        """;
 
-Then enter the project folder:
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "posts"))
+                .timeout(Duration.ofSeconds(5))
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPlayLoad))
+                .build();
 
-```bash
-cd java-http-client-jsonplaceholder
-```
+        try{
 
-Replace `YOUR-USERNAME` with your GitHub username.
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-## How to Run It
+            System.out.println("Status Code: " + response.statusCode());
+            System.out.println("Response Body:\n" + response.body());
+        } catch(Exception e){
 
-From the terminal, in the project folder:
+            System.err.println("Fallimento di rete o interrusione del thread: " + e.getMessage()
+                    + "\n" + e.getStackTrace()
+                    + "\nResponse Code: " + response.statusCode());
+        }
+    }
+    public static void main(String[] args){
 
-```bash
-javac src/Main.java
-java -cp src Main
-```
-
-Or run `Main.java` directly from IntelliJ IDEA.
-
-## Example Output
-
-```text
-https://jsonplaceholder.typicode.com/
-Status Code: 201
-Response Body:
-{
-"id": 101
+        System.out.println(BASE_URL);
+        post();
+        fetch();
+    }
 }
-{
-"userId": 1,
-"id": 3,
-"title": "...",
-"body": "..."
-}
-Payload received successfully!
-```
-
-## Note
-
-JSONPlaceholder simulates the creation of new resources. When a `POST` request is executed, the server responds as if it had created a new item, but the data is not actually saved permanently.
-
-## Learning Objective
-
-This project helps you understand the basics of HTTP communication in Java:
-
-- the difference between `GET` and `POST`;
-- creating an HTTP request;
-- sending JSON to a server;
-- reading the response;
-- checking status codes;
-- handling network errors.
